@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Catch the Coin</title>
+  <title>Catch the Coin 🪙</title>
   <style>
     body { background:#111; color:#fff; text-align:center; font-family:sans-serif; }
     canvas { background:#222; margin-top:20px; border:2px solid #fff; }
+    input { padding:5px; margin:5px; }
+    button { padding:5px 10px; margin:5px; cursor:pointer; }
   </style>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 </head>
@@ -16,7 +18,7 @@
   <canvas id="game" width="600" height="400"></canvas>
 
   <script>
-    const socket = io();
+    const socket = io(); // auto-connect to same Render URL
     let roomId, playerId;
     let players = {}, scores = {};
     let coin = {x: 300, y: 200};
