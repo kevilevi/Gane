@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Catch the Coin</title>
+  <style>
+    body { background:#111; color:#fff; text-align:center; font-family:sans-serif; }
+    canvas { background:#222; margin-top:20px; border:2px solid #fff; }
+  </style>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Catch the Coin 🪙</h1>
+  <input id="room" placeholder="Room code" />
+  <input id="name" placeholder="Your name" />
+  <button onclick="join()">Join</button>
+  <canvas id="game" width="600" height="400"></canvas>
+
+  <script>
+    const socket = io();
+    let roomId, playerId;
+    let players = {}, scores = {};
+    let coin = {x: 300, y: 200};
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    function join() {
+      roomId = document.getElementById("room").value || "default";
+      const name = document.getElementById("name").value || "Player";
+      socket.emit("joinRoom", roomId, name);
+    }
+
+    socket.on("connect", () => { playerId = socket.id; });
+    socket.on("state", (data) => { players = data.players; scores = data.scores; });
+
+    // controls
+    document.addEventListener("keydown", (e) => {
+      if (!roomId) return;
+      if (e.key === "ArrowUp") socket.emit("move", roomId, "up");
+      if (e.key === "ArrowDown") socket.emit("move", roomId, "down");
+      if (e.key === "ArrowLeft") socket.emit("move", roomId, "left");
+      if (e.key === "ArrowRight") socket.emit("move", roomId, "right");
+    });
+
+    // check coin collection
+    function checkCoin() {
+      for (let id in players) {
+        const p = players[id];
+        if (Math.hypot(p.x - coin.x, p.y - coin.y) < 20) {
+          socket.emit("collectCoin", roomId);
+          coin = {x: Math.random()*580+10, y: Math.random()*380+10};
+        }
+      }
+    }
+
+    // draw loop
+    function draw() {
+      ctx.clearRect(0,0,600,400);
+      // coin
+      ctx.fillStyle="gold";
+      ctx.beginPath();
+      ctx.arc(coin.x, coin.y, 10, 0, Math.PI*2);
+      ctx.fill();
+      // players
+      for (let id in players) {
+        const p = players[id];
+        ctx.fillStyle = id===playerId ? "cyan" : "red";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 15, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillText(p.name, p.x-15, p.y-20);
+        ctx.fillText("Score: " + (scores[id]||0), p.x-20, p.y+30);
+      }
+      checkCoin();
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>
